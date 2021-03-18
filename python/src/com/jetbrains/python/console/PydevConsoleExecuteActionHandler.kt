@@ -6,11 +6,14 @@ import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.console.actions.LoggerPythonConsoleService
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.PyElementGenerator
@@ -202,6 +205,9 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
         }
       }
       if (shouldCopyToHistory(console)) {
+        // write userInput to log
+        val applicationService = service<LoggerPythonConsoleService>()
+        applicationService.write(myConsoleView.consoleEditor.document.text)
         copyToHistoryAndExecute(console)
       }
       else {
