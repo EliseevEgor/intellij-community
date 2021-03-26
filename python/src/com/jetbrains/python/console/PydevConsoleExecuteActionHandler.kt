@@ -8,9 +8,11 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.PyElementGenerator
@@ -57,6 +59,8 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
   }
 
+  private val applicationService = service<CommandQueueForPythonConsoleAction>();
+
   private fun sendLineToConsole(code: ConsoleCommunication.ConsoleCodeFragment) {
 
     val consoleComm = consoleCommunication
@@ -66,8 +70,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
       ++myIpythonInputPromptCount
     }
-
-    consoleComm.execInterpreter(code) {}
+    applicationService.sendCommand(consoleComm, code);
   }
 
   override fun updateConsoleState() {
@@ -174,12 +177,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   override fun runExecuteAction(console: LanguageConsoleView) {
     if (isEnabled) {
-      if (!canExecuteNow()) {
-        HintManager.getInstance().showErrorHint(console.consoleEditor, prevCommandRunningMessage)
-      }
-      else {
         doRunExecuteAction(console)
-      }
     }
     else {
       HintManager.getInstance().showErrorHint(console.consoleEditor, consoleIsNotEnabledMessage)
