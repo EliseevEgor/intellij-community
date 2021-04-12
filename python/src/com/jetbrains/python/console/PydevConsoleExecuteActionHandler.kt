@@ -8,7 +8,6 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
@@ -59,7 +58,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
   }
 
-  private val applicationService = service<CommandQueueForPythonConsoleAction>();
 
   private fun sendLineToConsole(code: ConsoleCommunication.ConsoleCodeFragment) {
 
@@ -70,7 +68,11 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
       ++myIpythonInputPromptCount
     }
-    applicationService.sendCommand(consoleComm, code);
+    // add new command to CommandQueue service
+    CommandQueueForPythonConsoleAction.getInstance().addNewCommand(code)
+
+    // ask the consoleCommunication to execute the code fragment
+    consoleComm.execInterpreter(code) {}
   }
 
   override fun updateConsoleState() {
@@ -89,7 +91,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     }
     else {
-      executingPrompt()
+      ordinaryPrompt();
     }
   }
 

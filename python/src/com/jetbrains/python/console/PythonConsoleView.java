@@ -35,10 +35,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.xdebugger.impl.frame.CommandQueueView;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction;
+import com.jetbrains.python.console.actions.CommandQueueListener;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -75,8 +78,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
+  // field holds the class that renders the CommandQueue
+  private final CommandQueueView myQueueView = new CommandQueueView();
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
+  // flag whether to show the panel with the CommandQueue
+  private boolean isShowQueue;
   @Nullable private String mySdkHomePath;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
@@ -113,6 +120,20 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
       showVariables((PydevConsoleCommunication)communication);
+    }
+    // add listener(CommandQueueListener) for CommandQueue service
+    if (communication instanceof PydevConsoleCommunication) {
+      CommandQueueForPythonConsoleAction.getInstance().addListener(new CommandQueueListener() {
+        @Override
+        public void removeCommand() {
+          myQueueView.remove();
+        }
+
+        @Override
+        public void addCommand(String command) {
+          myQueueView.add(command);
+        }
+      });
     }
   }
 
@@ -385,6 +406,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
+  //the main function for drawing the queue,
+  public void showQueue() {
+    queueWindow();
+  }
+
   @NotNull
   @Override
   protected JComponent createCenterComponent() {
@@ -413,6 +439,33 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     add(p, BorderLayout.CENTER);
     validate();
     repaint();
+  }
+
+  // helper function for drawing the CommandQueue
+  private void queueWindow() {
+    Component console = getComponent(0);
+    removeAll();
+    JBSplitter p = new JBSplitter(false, 2f / 3);
+    p.setFirstComponent((JComponent)console);
+    p.setSecondComponent(myQueueView.getPanel());
+    p.setShowDividerControls(true);
+    p.setHonorComponentsMinimumSize(true);
+
+    add(p, BorderLayout.CENTER);
+    validate();
+    repaint();
+  }
+
+  // helper function for drawing the CommandQueue
+  public void restoreQueueWindow() {
+    Component component = getComponent(0);
+    if (myQueueView != null && component instanceof JBSplitter) {
+      JBSplitter pane = (JBSplitter)component;
+      removeAll();
+      add(pane.getFirstComponent(), BorderLayout.CENTER);
+      validate();
+      repaint();
+    }
   }
 
   public void restoreWindow() {
@@ -447,6 +500,14 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public boolean isShowVars() {
     return isShowVars;
+  }
+
+  public void setShowQueue(boolean showQueue) {
+    isShowQueue = showQueue;
+  }
+
+  public boolean isShowQueue() {
+    return isShowQueue;
   }
 
   public void whenInitialized(Runnable runnable) {

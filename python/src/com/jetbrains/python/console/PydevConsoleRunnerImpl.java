@@ -74,6 +74,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -219,7 +220,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
     // Show Variables
     actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
-
+    // Show Queue
+    actions.add(new ShowCommandQueueAction(myConsoleView));
     // Console History
     actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
     toolbarActions.addAll(actions);

@@ -24,6 +24,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction;
 import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -221,6 +222,10 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private void execNotifyFinished(boolean more) {
     myNeedsMore = more;
     setExecuting(false);
+
+    // notify the CommandQueue service that the command has been completed
+    // and it must be removed from the queue
+    CommandQueueForPythonConsoleAction.getInstance().removeCommand();
     notifyCommandExecuted(more);
   }
 
