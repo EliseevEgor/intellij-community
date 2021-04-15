@@ -10,9 +10,9 @@ import com.jetbrains.python.console.PythonConsoleView
 /***
  * action for showing the CommandQueue window
  */
-class ShowCommandQueueAction(private val consoleView: PythonConsoleView) : ToggleAction("Console Show CommandQueue",
+class ShowCommandQueueAction(private val consoleView: PythonConsoleView) : ToggleAction("Show CommandQueue",
                                                                                         "Shows window with CommandQueue",
-                                                                                        AllIcons.Debugger.Watch), DumbAware {
+                                                                                        AllIcons.Actions.ListFiles), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     return consoleView.isShowQueue;
   }

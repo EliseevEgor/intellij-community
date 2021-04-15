@@ -26,9 +26,7 @@ public final class CommandQueueForPythonConsoleAction {
   public void removeCommand() {
     if (!queue.isEmpty()) {
       queue.remove();
-      if (myListener != null) {
-        myListener.removeCommand();
-      }
+      myListener.removeCommand();
       if (!queue.isEmpty()) {
         execCommand(consoleComm, queue.peek());
       }
@@ -46,9 +44,6 @@ public final class CommandQueueForPythonConsoleAction {
     queue.add(code);
     if (myListener != null) {
       myListener.addCommand(code.getText());
-    }
-    if (queue.isEmpty()) {
-      execCommand(consoleComm, code);
     }
   }
 
