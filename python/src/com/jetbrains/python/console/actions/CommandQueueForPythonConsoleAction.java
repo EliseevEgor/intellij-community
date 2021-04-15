@@ -13,40 +13,48 @@ import java.util.Queue;
  * It is a singleton, so as not to pass instance to all external functions
  */
 @Service
-public class CommandQueueForPythonConsoleAction {
+public final class CommandQueueForPythonConsoleAction {
   private CommandQueueListener myListener;
-  private static volatile CommandQueueForPythonConsoleAction instance;
-  private final Queue<String> queue = new ArrayDeque<>();
+  private final Queue<ConsoleCommunication.ConsoleCodeFragment> queue = new ArrayDeque<>();
+  private ConsoleCommunication consoleComm;
 
-  private CommandQueueForPythonConsoleAction() {}
-
-  public static CommandQueueForPythonConsoleAction getInstance() {
-    if (instance == null) {
-      synchronized (CommandQueueForPythonConsoleAction.class) {
-        if (instance == null) {
-          instance = new CommandQueueForPythonConsoleAction();
-        }
-      }
-    }
-    return instance;
-  }
-
-  //adding a new listener that is responsible for drawing the command queue
+  // adding a new listener that is responsible for drawing the command queue
   public void addListener(CommandQueueListener listener) {
     myListener = listener;
   }
 
   public void removeCommand() {
-    queue.remove();
-    if (myListener != null) {
-      myListener.removeCommand();
+    if (!queue.isEmpty()) {
+      queue.remove();
+      if (myListener != null) {
+        myListener.removeCommand();
+      }
+      if (!queue.isEmpty()) {
+        execCommand(consoleComm, queue.peek());
+      }
     }
   }
 
-  public void addNewCommand(ConsoleCommunication.ConsoleCodeFragment code) {
-    queue.add(code.getText());
+  public void removeAll() {
+    queue.clear();
+  }
+
+  public void addNewCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment code) {
+    if (this.consoleComm == null) {
+      this.consoleComm = consoleComm;
+    }
+    queue.add(code);
     if (myListener != null) {
       myListener.addCommand(code.getText());
     }
+    if (queue.isEmpty()) {
+      execCommand(consoleComm, code);
+    }
+  }
+
+  private void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
+    comm.execInterpreter(code, (x) -> {
+      return null;
+    });
   }
 }

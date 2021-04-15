@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -225,7 +226,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     // notify the CommandQueue service that the command has been completed
     // and it must be removed from the queue
-    CommandQueueForPythonConsoleAction.getInstance().removeCommand();
+    ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand();
     notifyCommandExecuted(more);
   }
 

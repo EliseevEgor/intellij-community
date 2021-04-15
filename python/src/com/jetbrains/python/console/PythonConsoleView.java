@@ -11,6 +11,7 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -123,7 +124,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
     // add listener(CommandQueueListener) for CommandQueue service
     if (communication instanceof PydevConsoleCommunication) {
-      CommandQueueForPythonConsoleAction.getInstance().addListener(new CommandQueueListener() {
+      ServiceManager.getService(CommandQueueForPythonConsoleAction.class).addListener(new CommandQueueListener() {
         @Override
         public void removeCommand() {
           myQueueView.remove();
