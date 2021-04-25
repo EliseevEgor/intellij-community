@@ -5,7 +5,7 @@ package com.jetbrains.python.console.actions;
  * listener interface, required for rendering CommandQueue
  */
 public interface CommandQueueListener {
-  void removeCommand();
+  default void removeCommand(){}
 
   void addCommand(String command);
 }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.console.actions;
 
 import com.intellij.openapi.components.Service;
+import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
 import java.util.ArrayDeque;
@@ -10,11 +11,12 @@ import java.util.Queue;
 /**
  * Service for command queue in Python console.
  * It has own listener(CommandQueueListener myListener), which it notifies about the change in the command queue.
- * It is a singleton, so as not to pass instance to all external functions
  */
 @Service
 public final class CommandQueueForPythonConsoleAction {
   private CommandQueueListener myListener;
+  private PydevConsoleExecuteActionHandler myPydevConsoleExecuteActionHandler;
+
   private final Queue<ConsoleCommunication.ConsoleCodeFragment> queue = new ArrayDeque<>();
   private ConsoleCommunication consoleComm;
 
@@ -41,15 +43,24 @@ public final class CommandQueueForPythonConsoleAction {
     if (this.consoleComm == null) {
       this.consoleComm = consoleComm;
     }
-    queue.add(code);
-    if (myListener != null) {
+    if (!code.getText().isBlank()) {
+      queue.add(code);
       myListener.addCommand(code.getText());
+
+      if (queue.size() == 1) {
+        execCommand(consoleComm, code);
+      }
     }
+    myPydevConsoleExecuteActionHandler.updateConsoleState();
   }
 
   private void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
     comm.execInterpreter(code, (x) -> {
       return null;
     });
+  }
+
+  public void setPydevConsoleExecuteActionHandler(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler) {
+    myPydevConsoleExecuteActionHandler = pydevConsoleExecuteActionHandler;
   }
 }

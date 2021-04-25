@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction
+import com.jetbrains.python.console.actions.CommandQueueListener
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.PyElementGenerator
@@ -37,6 +38,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   init {
     this.consoleCommunication.addCommunicationListener(this)
+    service<CommandQueueForPythonConsoleAction>().setPydevConsoleExecuteActionHandler(this)
   }
 
   override fun processLine(line: String) {
@@ -73,7 +75,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     service<CommandQueueForPythonConsoleAction>().addNewCommand(consoleComm, code)
 
     // ask the consoleCommunication to execute the code fragment
-    consoleComm.execInterpreter(code) {}
+    //consoleComm.execInterpreter(code) {}
   }
 
   override fun updateConsoleState() {
@@ -92,7 +94,9 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       }
     }
     else {
-      ordinaryPrompt();
+      inPrompt()
+      //executingPrompt()
+      //ordinaryPrompt();
     }
   }
 
@@ -119,7 +123,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   private fun ipythonInPrompt() {
     myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", TextAttributes()) {
       override fun getAttributes(): TextAttributes {
-        val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY);
+        val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY)
         attrs.fontType = Font.PLAIN
         return attrs
       }
