@@ -23,6 +23,9 @@ public class CommandQueueView {
     commandList.addElement(command);
   }
 
+  public void clear(){
+    commandList.clear();
+  }
   public CommandQueueView() {
     mainPanel = new JPanel(new BorderLayout());
     commandList = new DefaultListModel<>();

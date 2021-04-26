@@ -37,6 +37,7 @@ public final class CommandQueueForPythonConsoleAction {
 
   public void removeAll() {
     queue.clear();
+    myListener.removeAll();
   }
 
   public void addNewCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment code) {

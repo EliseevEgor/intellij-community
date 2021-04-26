@@ -5,12 +5,13 @@ import traceback
 
 from _pydev_bundle import _pydev_imports_tipper
 from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
-from _pydev_bundle.pydev_console_types import CodeFragment
+from _pydev_bundle.pydev_console_types import CodeFragment, get_err, set_err
 from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
+from _pydev_bundle.pydev_ipython_console_011 import get_err1, set_err1
 from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
@@ -122,6 +123,13 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         except:
             traceback.print_exc()
             return False
+
+    def getError(self):
+        result = get_err()
+        result1 = get_err1()
+        set_err(False)
+        set_err1(False)
+        return result or result1
 
     def execLine(self, line):
         try:

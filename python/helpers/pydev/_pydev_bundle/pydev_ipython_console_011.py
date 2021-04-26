@@ -333,6 +333,13 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
 
 InteractiveShellABC.register(PyDevTerminalInteractiveShell)  # @UndefinedVariable
 
+err = False
+def get_err1():
+    return err
+
+def set_err1(value):
+    global err
+    err = value
 #=======================================================================================================================
 # _PyDevFrontEnd
 #=======================================================================================================================
@@ -466,8 +473,10 @@ class _PyDevFrontEnd:
 
             if self.is_complete(buf):
                 self._curr_exec_line += 1
-                self.ipython.run_cell(buf)
+                res = self.ipython.run_cell(buf)
                 del self._curr_exec_lines[:]
+                if (res.error_in_exec is not None):
+                    set_err1(True)
                 return False #execute complete (no more)
 
             return True #needs more
@@ -479,7 +488,9 @@ class _PyDevFrontEnd:
                 return True #needs more
             else:
                 self._curr_exec_line += 1
-                self.ipython.run_cell(line, store_history=True)
+                res = self.ipython.run_cell(line, store_history=True)
+                if (res.error_in_exec is not None):
+                    set_err1(True)
                 #hist = self.ipython.history_manager.output_hist_reprs
                 #rep = hist.get(self._curr_exec_line, None)
                 #if rep is not None:

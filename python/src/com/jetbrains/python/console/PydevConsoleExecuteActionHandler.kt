@@ -95,8 +95,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
     else {
       inPrompt()
-      //executingPrompt()
-      //ordinaryPrompt();
     }
   }
 

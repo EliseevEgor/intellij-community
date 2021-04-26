@@ -8,4 +8,6 @@ public interface CommandQueueListener {
   default void removeCommand(){}
 
   void addCommand(String command);
+
+  void removeAll();
 }

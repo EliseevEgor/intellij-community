@@ -134,6 +134,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         public void addCommand(String command) {
           myQueueView.add(command);
         }
+
+        @Override
+        public void removeAll(){
+          myQueueView.clear();
+        }
       });
     }
   }

@@ -128,6 +128,7 @@ exception ExceedingArrayDimensionsException {
 }
 
 service PythonConsoleBackendService {
+  bool getError(),
   /**
    * Returns `true` if Python console script needs more code to evaluate it.
    * Returns `false` if the code is scheduled for evaluation.

@@ -469,6 +469,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
             if (response != null && response.more) {
               myNeedsMore = true;
             }
+
+            try {
+              if (getPythonConsoleBackendClient().getError()){
+                ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeAll();
+              }
+            }
+            catch (TException ignored) {
+
+            }
+
             notifyCommandExecuted(true);
             onResponseReceived.fun(response);
           }
