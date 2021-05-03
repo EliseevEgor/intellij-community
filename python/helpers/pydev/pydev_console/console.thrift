@@ -128,7 +128,6 @@ exception ExceedingArrayDimensionsException {
 }
 
 service PythonConsoleBackendService {
-  bool getError(),
   /**
    * Returns `true` if Python console script needs more code to evaluate it.
    * Returns `false` if the code is scheduled for evaluation.
@@ -197,7 +196,7 @@ exception KeyboardInterruptException {
 }
 
 service PythonConsoleFrontendService {
-  void notifyFinished(1: bool needsMoreInput),
+  void notifyFinished(1: bool needsMoreInput, 2: bool exceptionOccurred),
 
   string requestInput(1: string path) throws (1: KeyboardInterruptException interrupted),
 
