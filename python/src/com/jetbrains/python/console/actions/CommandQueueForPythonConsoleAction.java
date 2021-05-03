@@ -5,8 +5,8 @@ import com.intellij.openapi.components.Service;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
-import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Service for command queue in Python console.
@@ -17,7 +17,7 @@ public final class CommandQueueForPythonConsoleAction {
   private CommandQueueListener myListener;
   private PydevConsoleExecuteActionHandler myPydevConsoleExecuteActionHandler;
 
-  private final Queue<ConsoleCommunication.ConsoleCodeFragment> queue = new ArrayDeque<>();
+  private final Queue<ConsoleCommunication.ConsoleCodeFragment> queue = new ConcurrentLinkedDeque<>();
   private ConsoleCommunication consoleComm;
 
   // adding a new listener that is responsible for drawing the command queue
@@ -56,9 +56,7 @@ public final class CommandQueueForPythonConsoleAction {
   }
 
   private void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
-    comm.execInterpreter(code, (x) -> {
-      return null;
-    });
+    comm.execInterpreter(code, x -> null);
   }
 
   public void setPydevConsoleExecuteActionHandler(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler) {
