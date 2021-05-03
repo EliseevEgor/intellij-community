@@ -124,13 +124,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             traceback.print_exc()
             return False
 
-    def getError(self):
-        result = get_err()
-        result1 = get_err1()
-        set_err(False)
-        set_err1(False)
-        return result or result1
-
     def execLine(self, line):
         try:
             if not self.banner_shown:
@@ -196,6 +189,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                         thread.interrupt_main()
                     else:
                         self.mainThread._thread.interrupt()  # Jython
+
             self.finish_exec(False)
             return True
         except:
@@ -224,7 +218,11 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         server = self.get_server()
 
         if server is not None:
-            return server.notifyFinished(more)
+            result = get_err()
+            result1 = get_err1()
+            set_err(False)
+            set_err1(False)
+            return server.notifyFinished(more, result or result1)
         else:
             return True
 

@@ -224,9 +224,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     myNeedsMore = more;
     setExecuting(false);
 
-    // notify the CommandQueue service that the command has been completed
-    // and it must be removed from the queue
-    ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand();
     notifyCommandExecuted(more);
   }
 
@@ -468,15 +465,6 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
             InterpreterResponse response = nextResponse;
             if (response != null && response.more) {
               myNeedsMore = true;
-            }
-
-            try {
-              if (getPythonConsoleBackendClient().getError()){
-                ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeAll();
-              }
-            }
-            catch (TException ignored) {
-
             }
 
             notifyCommandExecuted(true);
@@ -771,7 +759,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
 
     @Override
-    public void notifyFinished(boolean needsMoreInput) {
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
+      if (!exceptionOccurred) {
+        // notify the CommandQueue service that the command has been completed without exceptions
+        // and it must be removed from the queue
+        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand();
+      }
+      else {
+        // clear queue if exception occurred
+        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeAll();
+      }
       execNotifyFinished(needsMoreInput);
     }
 
