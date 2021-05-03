@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,8 @@ public class CommandQueueView {
     mainPanel = new JPanel(new BorderLayout());
     commandList = new DefaultListModel<>();
     var list = new JBList<>(commandList);
+    list.setOpaque(false);
+    list.setBorder(JBUI.Borders.empty());
     list.setCellRenderer((jList, value, index, selected, expanded)-> {
       JLabel label = new JLabel();
       if (index == 0) {

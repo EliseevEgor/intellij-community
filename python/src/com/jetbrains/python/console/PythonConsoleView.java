@@ -23,6 +23,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -88,6 +90,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Nullable private String mySdkHomePath;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
+  private JBPopup myCommandQueue;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -414,7 +417,18 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   //the main function for drawing the queue,
   public void showQueue() {
-    queueWindow();
+    myCommandQueue = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(myQueueView.getPanel(), null)
+      .setMovable(true)
+      .setFocusable(true)
+      .setResizable(true)
+      .setRequestFocus(true)
+      .setShowShadow(true)
+      .setCancelOnClickOutside(false)
+      .setTitle("Command Queue")
+      .createPopup();
+    myCommandQueue
+      .showInFocusCenter();
   }
 
   @NotNull
@@ -448,30 +462,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   // helper function for drawing the CommandQueue
-  private void queueWindow() {
-    Component console = getComponent(0);
-    removeAll();
-    JBSplitter p = new JBSplitter(false, 2f / 3);
-    p.setFirstComponent((JComponent)console);
-    p.setSecondComponent(myQueueView.getPanel());
-    p.setShowDividerControls(true);
-    p.setHonorComponentsMinimumSize(true);
-
-    add(p, BorderLayout.CENTER);
-    validate();
-    repaint();
-  }
-
-  // helper function for drawing the CommandQueue
   public void restoreQueueWindow() {
-    Component component = getComponent(0);
-    if (myQueueView != null && component instanceof JBSplitter) {
-      JBSplitter pane = (JBSplitter)component;
-      removeAll();
-      add(pane.getFirstComponent(), BorderLayout.CENTER);
-      validate();
-      repaint();
-    }
+    myCommandQueue.cancel();
   }
 
   public void restoreWindow() {
