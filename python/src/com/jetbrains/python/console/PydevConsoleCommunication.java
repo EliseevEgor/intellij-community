@@ -763,11 +763,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       if (!exceptionOccurred) {
         // notify the CommandQueue service that the command has been completed without exceptions
         // and it must be removed from the queue
-        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand();
+        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand(PydevConsoleCommunication.this);
       }
       else {
         // clear queue if exception occurred
-        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeAll();
+        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeAll(PydevConsoleCommunication.this);
       }
       execNotifyFinished(needsMoreInput);
     }

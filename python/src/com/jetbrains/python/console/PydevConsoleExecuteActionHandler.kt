@@ -30,6 +30,10 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   private val myEnterHandler = PyConsoleEnterHandler()
   private var myIpythonInputPromptCount = 2
 
+  fun decreaseInputPromptCount(value : Int) {
+    myIpythonInputPromptCount -= value
+  }
+
   override var isEnabled: Boolean = false
     set(value) {
       field = value
@@ -38,7 +42,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   init {
     this.consoleCommunication.addCommunicationListener(this)
-    service<CommandQueueForPythonConsoleAction>().setPydevConsoleExecuteActionHandler(this)
   }
 
   override fun processLine(line: String) {
@@ -72,10 +75,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       ++myIpythonInputPromptCount
     }
     // add new command to CommandQueue service
-    service<CommandQueueForPythonConsoleAction>().addNewCommand(consoleComm, code)
-
-    // ask the consoleCommunication to execute the code fragment
-    //consoleComm.execInterpreter(code) {}
+    service<CommandQueueForPythonConsoleAction>().addNewCommand(this, code)
   }
 
   override fun updateConsoleState() {

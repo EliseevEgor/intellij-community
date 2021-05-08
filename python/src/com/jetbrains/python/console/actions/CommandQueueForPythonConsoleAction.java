@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
@@ -14,52 +14,60 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  */
 @Service
 public final class CommandQueueForPythonConsoleAction {
-  private CommandQueueListener myListener;
-  private PydevConsoleExecuteActionHandler myPydevConsoleExecuteActionHandler;
+  private final Map<ConsoleCommunication, CommandQueueListener> myListeners = new HashMap<>();
 
-  private final Queue<ConsoleCommunication.ConsoleCodeFragment> queue = new ConcurrentLinkedDeque<>();
-  private ConsoleCommunication consoleComm;
+
+  private final Map<ConsoleCommunication, Queue<ConsoleCommunication.ConsoleCodeFragment>>  queues = new HashMap<>();
+  private final Map<ConsoleCommunication, PydevConsoleExecuteActionHandler> handlers = new HashMap<>();
 
   // adding a new listener that is responsible for drawing the command queue
-  public void addListener(CommandQueueListener listener) {
-    myListener = listener;
+  public void addListener(ConsoleCommunication comm, CommandQueueListener listener) {
+    myListeners.put(comm, listener);
   }
 
-  public void removeCommand() {
+  public void removeCommand(ConsoleCommunication consoleComm) {
+    var queue = queues.get(consoleComm);
     if (!queue.isEmpty()) {
       queue.remove();
-      myListener.removeCommand();
+      myListeners.get(consoleComm).removeCommand();
       if (!queue.isEmpty()) {
         execCommand(consoleComm, queue.peek());
       }
     }
   }
 
-  public void removeAll() {
+  public void removeAll(ConsoleCommunication consoleComm) {
+    var queue = queues.get(consoleComm);
+    int value = queue.size();
+    if (value > 1){
+      handlers.get(consoleComm).decreaseInputPromptCount(value - 1);
+    }
+
     queue.clear();
-    myListener.removeAll();
+    myListeners.get(consoleComm).removeAll();
   }
 
-  public void addNewCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment code) {
-    if (this.consoleComm == null) {
-      this.consoleComm = consoleComm;
+  public void addNewCommand(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler, ConsoleCommunication.ConsoleCodeFragment code) {
+    var console = pydevConsoleExecuteActionHandler.getConsoleCommunication();
+    if (!queues.containsKey(pydevConsoleExecuteActionHandler.getConsoleCommunication())) {
+      queues.put(console, new ConcurrentLinkedDeque<>());
+      handlers.put(console, pydevConsoleExecuteActionHandler);
     }
+
     if (!code.getText().isBlank()) {
+
+      var queue = queues.get(console);
       queue.add(code);
-      myListener.addCommand(code.getText());
+      myListeners.get(console).addCommand(code.getText());
 
       if (queue.size() == 1) {
-        execCommand(consoleComm, code);
+        execCommand(console, code);
       }
     }
-    myPydevConsoleExecuteActionHandler.updateConsoleState();
+    pydevConsoleExecuteActionHandler.updateConsoleState();
   }
 
-  private void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
+  private static void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
     comm.execInterpreter(code, x -> null);
-  }
-
-  public void setPydevConsoleExecuteActionHandler(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler) {
-    myPydevConsoleExecuteActionHandler = pydevConsoleExecuteActionHandler;
   }
 }

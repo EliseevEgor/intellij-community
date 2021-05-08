@@ -127,7 +127,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
     // add listener(CommandQueueListener) for CommandQueue service
     if (communication instanceof PydevConsoleCommunication) {
-      ServiceManager.getService(CommandQueueForPythonConsoleAction.class).addListener(new CommandQueueListener() {
+      ServiceManager.getService(CommandQueueForPythonConsoleAction.class).addListener(communication, new CommandQueueListener() {
         @Override
         public void removeCommand() {
           myQueueView.remove();
