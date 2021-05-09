@@ -103,13 +103,13 @@ class BaseCodeExecutor(object):
                         import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
 
-                    more = self.do_add_exec(code_fragment)
+                    more, exception_occurred = self.do_add_exec(code_fragment)
 
                     if hasattr(self, 'debugger'):
                         import pydevd_tracing
                         pydevd_tracing.SetTrace(None)
 
-                    self.finish_exec(more)
+                    self.finish_exec(more, exception_occurred)
                 finally:
                     if help is not None:
                         try:
@@ -193,7 +193,7 @@ class BaseCodeExecutor(object):
     def start_exec(self):
         self.interruptable = True
 
-    def finish_exec(self, more):
+    def finish_exec(self, more, exception_occurred):
         self.interruptable = False
 
         return True

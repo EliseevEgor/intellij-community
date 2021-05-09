@@ -1,29 +1,3 @@
-import sys, traceback
-
-err = False
-
-def set_err(value):
-    global err
-    err = value
-
-def get_err():
-    return err
-
-def info(type, value, tb):
-    set_err(True)
-    if (not sys.stderr.isatty() or
-            not sys.stdin.isatty()):
-        original_hook(type, value, tb)
-    else:
-        traceback.print_exception(type, value, tb)
-
-
-original_hook = sys.excepthook
-if sys.excepthook == sys.__excepthook__:
-
-    sys.excepthook = info
-
-
 class CodeFragment:
     def __init__(self, text, is_single_line=True):
         self.text = text
@@ -44,7 +18,7 @@ class Command:
         self.interpreter = interpreter
         self.code_fragment = code_fragment
         self.more = None
-
+        self.exception_occurred = False
 
     def symbol_for_fragment(code_fragment):
         if code_fragment.is_single_line:
