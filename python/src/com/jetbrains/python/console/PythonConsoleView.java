@@ -8,6 +8,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,6 +26,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -33,10 +37,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.content.Content;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.impl.frame.CommandQueueView;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
@@ -91,6 +97,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
   private JBPopup myCommandQueue;
+
+  public void setCommandQueueTitle(String title) {
+    myCommandQueue.setCaption(title + " Command Queue");
+  }
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -417,18 +427,39 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   //the main function for drawing the queue,
   public void showQueue() {
+    JBPopupListener listener = new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
+
+      }
+
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        isShowQueue = false;
+      }
+    };
     myCommandQueue = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(myQueueView.getPanel(), null)
       .setMovable(true)
-      .setFocusable(true)
       .setResizable(true)
-      .setRequestFocus(true)
       .setShowShadow(true)
       .setCancelOnClickOutside(false)
-      .setTitle("Command Queue")
+      .setTitle(getConsoleDisplayName(getProject()) + " Command Queue")
+      .setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")))
+      .addListener(listener)
       .createPopup();
     myCommandQueue
-      .showInFocusCenter();
+      .showInBestPositionFor(getConsoleEditor());
+  }
+
+  @Nullable
+  private static String getConsoleDisplayName(@NotNull Project project) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
+    ToolWindow window = toolWindow.getToolWindow();
+    if (window == null) return null;
+    final Content content = window.getContentManager().getSelectedContent();
+    if (content == null) return null;
+    return content.getDisplayName();
   }
 
   @NotNull
@@ -516,5 +547,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @TestOnly
   public XDebuggerTreeNode getDebuggerTreeRootNode() {
     return mySplitView.getTree().getRoot();
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    Disposer.dispose(myCommandQueue);
   }
 }
