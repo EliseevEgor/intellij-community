@@ -58,7 +58,7 @@ public final class CommandQueueForPythonConsoleAction {
 
       var queue = queues.get(console);
       queue.add(code);
-      myListeners.get(console).addCommand(code.getText());
+      myListeners.get(console).addCommand(code);
 
       if (queue.size() == 1) {
         execCommand(console, code);

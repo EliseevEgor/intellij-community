@@ -1031,6 +1031,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         if (rerun) {
           GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
         }
+        myConsoleView.restoreQueueWindow();
       }
     }.queue();
   }

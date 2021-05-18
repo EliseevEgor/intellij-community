@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.console.pythonCommandQueue.PythonCommandQueuePanel;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -89,6 +90,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private XStandaloneVariablesView mySplitView;
   // field holds the class that renders the CommandQueue
   private final CommandQueueView myQueueView = new CommandQueueView();
+
+  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel();
+
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
   // flag whether to show the panel with the CommandQueue
@@ -97,6 +101,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
   private JBPopup myCommandQueue;
+
 
   public void setCommandQueueTitle(String title) {
     myCommandQueue.setCaption(title + " Command Queue");
@@ -140,12 +145,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       ServiceManager.getService(CommandQueueForPythonConsoleAction.class).addListener(communication, new CommandQueueListener() {
         @Override
         public void removeCommand() {
-          myQueueView.remove();
+          myCommandQueuePanel.removeCommand();
         }
 
         @Override
-        public void addCommand(String command) {
-          myQueueView.add(command);
+        public void addCommand(ConsoleCommunication.ConsoleCodeFragment command) {
+          myCommandQueuePanel.addCommand(command);
         }
 
         @Override
@@ -439,7 +444,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       }
     };
     myCommandQueue = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(myQueueView.getPanel(), null)
+      .createComponentPopupBuilder(myCommandQueuePanel, null)
       .setMovable(true)
       .setResizable(true)
       .setShowShadow(true)
@@ -494,7 +499,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   // helper function for drawing the CommandQueue
   public void restoreQueueWindow() {
-    myCommandQueue.cancel();
+    if (myCommandQueue != null) {
+      ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myCommandQueue));
+    }
   }
 
   public void restoreWindow() {
@@ -552,6 +559,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void dispose() {
     super.dispose();
-    Disposer.dispose(myCommandQueue);
+    if (myCommandQueue != null) {
+      Disposer.dispose(myCommandQueue);
+    }
   }
 }
