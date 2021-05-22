@@ -87,8 +87,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  // field holds the class that renders the CommandQueue
-  private final CommandQueueView myQueueView = new CommandQueueView();
 
   private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel();
 
