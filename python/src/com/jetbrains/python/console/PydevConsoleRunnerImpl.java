@@ -74,7 +74,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
-import com.jetbrains.python.console.actions.ShowCommandQueueAction;
+import com.jetbrains.python.console.actions.ShowCommandQueueWithEditorAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -221,7 +221,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Show Variables
     actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
     // Show Queue
-    actions.add(new ShowCommandQueueAction(myConsoleView));
+    actions.add(new ShowCommandQueueWithEditorAction(myConsoleView));
     // Console History
     actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
     toolbarActions.addAll(actions);
@@ -1031,7 +1031,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         if (rerun) {
           GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
         }
-        myConsoleView.restoreQueueWindow();
       }
     }.queue();
   }

@@ -43,9 +43,6 @@ interface PyExecuteConsoleCustomizer {
    * Notify about new name set for custom run descriptor
    */
   fun descriptorNameUpdated(descriptor: RunContentDescriptor, newName: String) {
-    if (descriptor.executionConsole is PythonConsoleView){
-      (descriptor.executionConsole as PythonConsoleView).setCommandQueueTitle(newName)
-    }
   }
 
   /**

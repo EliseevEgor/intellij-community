@@ -8,11 +8,9 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -24,12 +22,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.console.pythonCommandQueue.PythonCommandQueuePanel;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -49,8 +41,6 @@ import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction;
-import com.jetbrains.python.console.actions.CommandQueueListener;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
@@ -87,24 +77,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  // field holds the class that renders the CommandQueue
-  private final CommandQueueView myQueueView = new CommandQueueView();
-
-  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel();
 
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
-  // flag whether to show the panel with the CommandQueue
-  private boolean isShowQueue;
   @Nullable private String mySdkHomePath;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
-  private JBPopup myCommandQueue;
-
-
-  public void setCommandQueueTitle(String title) {
-    myCommandQueue.setCaption(title + " Command Queue");
-  }
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -138,26 +116,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
     if (isShowVars && communication instanceof PydevConsoleCommunication) {
       showVariables((PydevConsoleCommunication)communication);
-    }
-    // add listener(CommandQueueListener) for CommandQueue service
-    if (communication instanceof PydevConsoleCommunication) {
-      myCommandQueuePanel.setCommunication(communication);
-      ServiceManager.getService(CommandQueueForPythonConsoleAction.class).addListener(communication, new CommandQueueListener() {
-        @Override
-        public void removeCommand() {
-          myCommandQueuePanel.removeCommand();
-        }
-
-        @Override
-        public void addCommand(ConsoleCommunication.ConsoleCodeFragment command) {
-          myCommandQueuePanel.addCommand(command);
-        }
-
-        @Override
-        public void removeAll(){
-          myCommandQueuePanel.removeAllCommands();
-        }
-      });
     }
   }
 
@@ -430,35 +388,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
-  //the main function for drawing the queue,
-  public void showQueue() {
-    JBPopupListener listener = new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) {
-
-      }
-
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        isShowQueue = false;
-      }
-    };
-    myCommandQueue = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(myCommandQueuePanel, null)
-      .setMovable(true)
-      .setResizable(true)
-      .setShowShadow(true)
-      .setCancelOnClickOutside(false)
-      .setTitle(getConsoleDisplayName(getProject()) + " Command Queue")
-      .setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")))
-      .addListener(listener)
-      .createPopup();
-    myCommandQueue
-      .showInBestPositionFor(getConsoleEditor());
-  }
-
   @Nullable
-  private static String getConsoleDisplayName(@NotNull Project project) {
+  public static String getConsoleDisplayName(@NotNull Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
     ToolWindow window = toolWindow.getToolWindow();
     if (window == null) return null;
@@ -497,12 +428,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     repaint();
   }
 
-  // helper function for drawing the CommandQueue
-  public void restoreQueueWindow() {
-    if (myCommandQueue != null) {
-      ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myCommandQueue));
-    }
-  }
 
   public void restoreWindow() {
     Component component = getComponent(0);
@@ -538,14 +463,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return isShowVars;
   }
 
-  public void setShowQueue(boolean showQueue) {
-    isShowQueue = showQueue;
-  }
-
-  public boolean isShowQueue() {
-    return isShowQueue;
-  }
-
   public void whenInitialized(Runnable runnable) {
     myInitialized.doWhenDone(runnable);
   }
@@ -554,13 +471,5 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @TestOnly
   public XDebuggerTreeNode getDebuggerTreeRootNode() {
     return mySplitView.getTree().getRoot();
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
-    if (myCommandQueue != null) {
-      Disposer.dispose(myCommandQueue);
-    }
   }
 }

@@ -17,21 +17,13 @@ import java.util.stream.Collectors;
 public final class CommandQueueForPythonConsoleAction {
   private static final int DEFAULT_CAPACITY = 10;
 
-  private final Map<ConsoleCommunication, CommandQueueListener> myListeners = new HashMap<>();
-
   private final Map<ConsoleCommunication, Queue<ConsoleCommunication.ConsoleCodeFragment>>  queues = new HashMap<>();
   private final Map<ConsoleCommunication, PydevConsoleExecuteActionHandler> handlers = new HashMap<>();
-
-  // adding a new listener that is responsible for drawing the command queue
-  public void addListener(ConsoleCommunication comm, CommandQueueListener listener) {
-    myListeners.put(comm, listener);
-  }
 
   public void removeCommand(ConsoleCommunication consoleComm) {
     var queue = queues.get(consoleComm);
     if (!queue.isEmpty()) {
       queue.remove();
-      myListeners.get(consoleComm).removeCommand();
       if (!queue.isEmpty()) {
         execCommand(consoleComm, queue.peek());
       }
@@ -42,7 +34,9 @@ public final class CommandQueueForPythonConsoleAction {
     var queue = queues.get(consoleComm);
     if (!queue.isEmpty()) {
       queue.remove(codeFragment);
+      handlers.get(consoleComm).decreaseInputPromptCount(1);
     }
+
   }
 
   public void removeAll(ConsoleCommunication consoleComm) {
@@ -53,7 +47,6 @@ public final class CommandQueueForPythonConsoleAction {
     }
 
     queue.clear();
-    myListeners.get(consoleComm).removeAll();
   }
 
   public void addNewCommand(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler, ConsoleCommunication.ConsoleCodeFragment code) {
@@ -66,7 +59,6 @@ public final class CommandQueueForPythonConsoleAction {
     if (!code.getText().isBlank()) {
       var queue = queues.get(console);
       queue.add(code);
-      myListeners.get(console).addCommand(code);
 
       if (queue.size() == 1) {
         execCommand(console, code);

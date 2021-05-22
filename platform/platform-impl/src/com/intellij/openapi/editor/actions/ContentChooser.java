@@ -86,6 +86,34 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     init();
   }
 
+  public ContentChooser(Project project,
+                        @NlsContexts.DialogTitle String title,
+                        boolean useIdeaEditor,
+                        boolean allowMultipleSelections,
+                        @NotNull IdeModalityType ideModalityType) {
+    super(project, true, ideModalityType);
+    myProject = project;
+    myUseIdeaEditor = useIdeaEditor;
+    myAllowMultipleSelections = allowMultipleSelections;
+    myUpdateAlarm = new Alarm(getDisposable());
+    mySplitter = new JBSplitter(true, 0.3f);
+    mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
+    myList = new JBList<>(new CollectionListModel<>()) {
+      @Override
+      protected void doCopyToClipboardAction() {
+        String text = getSelectedText();
+        if (!text.isEmpty()) {
+          CopyPasteManager.getInstance().setContents(new StringSelection(text));
+        }
+      }
+    };
+
+    setOKButtonText(CommonBundle.getOkButtonText());
+    setTitle(title);
+
+    init();
+  }
+
   public void setContentIcon(@Nullable Icon icon) {
     myListEntryIcon = icon;
   }
@@ -354,7 +382,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Item value, int index, boolean selected, boolean hasFocus) {
-      setIcon(myListEntryIcon);
+      setItemIcon(this, index);
       if (myUseIdeaEditor && myUseNumbering) {
         int max = list.getModel().getSize();
         String indexString = String.valueOf(index + 1);
@@ -367,6 +395,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
       SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
+  }
+
+  public void setItemIcon(ColoredListCellRenderer renderer, int index){
+    renderer.setIcon(myListEntryIcon);
   }
 
   private static class Item {
