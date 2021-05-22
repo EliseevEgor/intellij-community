@@ -1,11 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console.pythonCommandQueue;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SeparatorOrientation;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,56 +21,84 @@ import java.util.List;
 import java.util.Map;
 
 public class PythonCommandQueuePanel extends JPanel {
-  private final JPanel myPanel = new JPanel();
-  private final JBScrollPane listScroller = new JBScrollPane(myPanel);
+  protected final JPanel myPanel = new JPanel();
 
   private final List<ConsoleCommunication.ConsoleCodeFragment> myCommands = new ArrayList<>();
   private final Map<ConsoleCommunication.ConsoleCodeFragment, QueueElementPanel> myQueueElementPanelMap = new HashMap<>();
 
+  private ConsoleCommunication communication;
+
   public PythonCommandQueuePanel() {
-    myPanel.setPreferredSize(new Dimension(250, 1000));
-    listScroller.setPreferredSize(new Dimension(250, 100));
-    listScroller.setAlignmentY(TOP_ALIGNMENT);
-
-    setOpaque(false);
+    setLayout(new GridLayout());
     setBorder(JBUI.Borders.empty());
+    setPreferredSize(new Dimension(300, 100));
 
-    //myPanel.add(listScroller);
-    myPanel.setLayout(new BorderLayout());
-    myPanel.setOpaque(false);
-    setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    add(listScroller);
+    myPanel.setLayout(new VerticalLayout(0));
+    myPanel.setBorder(JBUI.Borders.empty(7));
 
-    revalidate();
-    repaint();
+    JBScrollPane scrollPane = new JBScrollPane(myPanel);
+    add(scrollPane);
+
+    repaintAll();
   }
 
   public void addCommand(ConsoleCommunication.ConsoleCodeFragment command) {
+    QueueElementPanel elementPanel = new QueueElementPanel(command,
+                                                           myCommands.size() == 0 ? AllIcons.Actions.Execute : AllIcons.Actions.Play_forward);
     myCommands.add(command);
-    QueueElementPanel elementPanel = new QueueElementPanel(command.getText());
     myQueueElementPanelMap.put(command, elementPanel);
 
     myPanel.add(elementPanel.getQueuePanel());
-    //myPanel.add(Box.createRigidArea(new Dimension(0,5)));
-    //myPanel.revalidate();
-    //myPanel.repaint();
-    revalidate();
-    repaint();
-  }
-  public void removeCommand(JPanel panel){
 
+    if (myCommands.size() == 1) {
+      elementPanel.setCancelButtonPainting(false);
+    }
+
+    repaintAll();
   }
+
+  public void removeCommand(ConsoleCommunication.ConsoleCodeFragment command) {
+    myCommands.remove(command);
+    var removedPanel = myQueueElementPanelMap.remove(command);
+
+    myPanel.remove(removedPanel.getQueuePanel());
+    if (myCommands.size() > 0) {
+      QueueElementPanel elementPanel = myQueueElementPanelMap.get(myCommands.get(0));
+      elementPanel.setIcon(AllIcons.Actions.Execute);
+      elementPanel.setCancelButtonPainting(false);
+    }
+
+    ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand(communication, command);
+    repaintAll();
+  }
+
   public void removeCommand() {
     var removedElem = myCommands.remove(0);
     var removedPanel = myQueueElementPanelMap.remove(removedElem);
 
     myPanel.remove(removedPanel.getQueuePanel());
-    //myPanel.revalidate();
-    //myPanel.repaint();
-    //listScroller.revalidate();
-    //listScroller.repaint();
+    if (myCommands.size() > 0) {
+      QueueElementPanel elementPanel = myQueueElementPanelMap.get(myCommands.get(0));
+      elementPanel.setIcon(AllIcons.Actions.Execute);
+      elementPanel.setCancelButtonPainting(false);
+    }
+    repaintAll();
+  }
+
+  public void removeAllCommands() {
+    myCommands.clear();
+    myQueueElementPanelMap.clear();
+    myPanel.removeAll();
+
+    repaintAll();
+  }
+
+  private void repaintAll() {
     revalidate();
     repaint();
+  }
 
+  public void setCommunication(ConsoleCommunication communication) {
+    this.communication = communication;
   }
 }

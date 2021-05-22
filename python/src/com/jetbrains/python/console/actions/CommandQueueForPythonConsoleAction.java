@@ -6,7 +6,8 @@ import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.stream.Collectors;
 
 /**
  * Service for command queue in Python console.
@@ -14,8 +15,9 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  */
 @Service
 public final class CommandQueueForPythonConsoleAction {
-  private final Map<ConsoleCommunication, CommandQueueListener> myListeners = new HashMap<>();
+  private static final int DEFAULT_CAPACITY = 10;
 
+  private final Map<ConsoleCommunication, CommandQueueListener> myListeners = new HashMap<>();
 
   private final Map<ConsoleCommunication, Queue<ConsoleCommunication.ConsoleCodeFragment>>  queues = new HashMap<>();
   private final Map<ConsoleCommunication, PydevConsoleExecuteActionHandler> handlers = new HashMap<>();
@@ -36,6 +38,13 @@ public final class CommandQueueForPythonConsoleAction {
     }
   }
 
+  public void removeCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment codeFragment) {
+    var queue = queues.get(consoleComm);
+    if (!queue.isEmpty()) {
+      queue.remove(codeFragment);
+    }
+  }
+
   public void removeAll(ConsoleCommunication consoleComm) {
     var queue = queues.get(consoleComm);
     int value = queue.size();
@@ -50,12 +59,11 @@ public final class CommandQueueForPythonConsoleAction {
   public void addNewCommand(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler, ConsoleCommunication.ConsoleCodeFragment code) {
     var console = pydevConsoleExecuteActionHandler.getConsoleCommunication();
     if (!queues.containsKey(pydevConsoleExecuteActionHandler.getConsoleCommunication())) {
-      queues.put(console, new ConcurrentLinkedDeque<>());
+      queues.put(console, new ArrayBlockingQueue<>(DEFAULT_CAPACITY));
       handlers.put(console, pydevConsoleExecuteActionHandler);
     }
 
     if (!code.getText().isBlank()) {
-
       var queue = queues.get(console);
       queue.add(code);
       myListeners.get(console).addCommand(code);
@@ -69,5 +77,9 @@ public final class CommandQueueForPythonConsoleAction {
 
   private static void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
     comm.execInterpreter(code, x -> null);
+  }
+
+  public List<ConsoleCommunication.ConsoleCodeFragment> getConsoleCommands(ConsoleCommunication communication) {
+    return queues.get(communication).stream().collect(Collectors.toUnmodifiableList());
   }
 }

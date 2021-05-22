@@ -45,7 +45,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.content.Content;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.xdebugger.impl.frame.CommandQueueView;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PyBundle;
@@ -142,6 +141,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
     // add listener(CommandQueueListener) for CommandQueue service
     if (communication instanceof PydevConsoleCommunication) {
+      myCommandQueuePanel.setCommunication(communication);
       ServiceManager.getService(CommandQueueForPythonConsoleAction.class).addListener(communication, new CommandQueueListener() {
         @Override
         public void removeCommand() {
@@ -155,7 +155,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
         @Override
         public void removeAll(){
-          myQueueView.clear();
+          myCommandQueuePanel.removeAllCommands();
         }
       });
     }
