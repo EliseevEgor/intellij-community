@@ -32,7 +32,7 @@ public final class CommandQueueForPythonConsoleAction {
 
   public void removeCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment codeFragment) {
     var queue = queues.get(consoleComm);
-    if (!queue.isEmpty()) {
+    if (!queue.isEmpty() && !queue.peek().equals(codeFragment)) {
       queue.remove(codeFragment);
       handlers.get(consoleComm).decreaseInputPromptCount(1);
     }
