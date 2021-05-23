@@ -5,9 +5,10 @@ import com.intellij.openapi.components.Service;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.stream.Collectors;
 
 /**
  * Service for command queue in Python console.
@@ -38,6 +39,7 @@ public final class CommandQueueForPythonConsoleAction {
     }
   }
 
+  // удаление через кнопку или del
   public void removeCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment codeFragment) {
     var queue = queues.get(consoleComm);
     if (!queue.isEmpty()) {
@@ -77,9 +79,5 @@ public final class CommandQueueForPythonConsoleAction {
 
   private static void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
     comm.execInterpreter(code, x -> null);
-  }
-
-  public List<ConsoleCommunication.ConsoleCodeFragment> getConsoleCommands(ConsoleCommunication communication) {
-    return queues.get(communication).stream().collect(Collectors.toUnmodifiableList());
   }
 }

@@ -3,9 +3,6 @@ package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SeparatorComponent;
-import com.intellij.ui.SeparatorOrientation;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
@@ -13,13 +10,15 @@ import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Main panel for PopupWindow (CommandQueue)
+ */
 public class PythonCommandQueuePanel extends JPanel {
   protected final JPanel myPanel = new JPanel();
 

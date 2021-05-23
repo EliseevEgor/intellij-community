@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.console.pythonCommandQueue.PythonCommandQueuePanel;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -54,6 +53,7 @@ import com.jetbrains.python.console.actions.CommandQueueListener;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.console.pythonCommandQueue.PythonCommandQueuePanel;
 import com.jetbrains.python.debugger.PyDebugValueDescriptor;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyStackFrame;
@@ -75,34 +75,25 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
-  static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
+  static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private final boolean myTestMode;
-
+  private final PyHighlighter myPyHighlighter;
+  private final EditorColorsScheme myScheme;
+  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel();
+  private final ActionCallback myInitialized = new ActionCallback();
+  private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
   private PythonConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput;
-  private final PyHighlighter myPyHighlighter;
-  private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
-
   private XStandaloneVariablesView mySplitView;
-
-  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel();
-
-  private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
   // flag whether to show the panel with the CommandQueue
   private boolean isShowQueue;
   @Nullable private String mySdkHomePath;
-
-  private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
   private JBPopup myCommandQueue;
 
-
-  public void setCommandQueueTitle(String title) {
-    myCommandQueue.setCaption(title + " Command Queue");
-  }
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -131,6 +122,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myScheme = getConsoleEditor().getColorsScheme();
   }
 
+  public void setCommandQueueTitle(String title) {
+    myCommandQueue.setCaption(title + " Command Queue");
+  }
+
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY, communication);
 
@@ -152,7 +147,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         }
 
         @Override
-        public void removeAll(){
+        public void removeAll() {
           myCommandQueuePanel.removeAllCommands();
         }
       });
@@ -278,9 +273,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (psiFile != null) {
           CommandProcessor.getInstance().runUndoTransparentAction(() ->
                                                                     CodeStyleManager.getInstance(getProject())
-                                                                                    .adjustLineIndent(psiFile,
-                                                                                                      new TextRange(0, psiFile
-                                                                                                        .getTextLength())));
+                                                                      .adjustLineIndent(psiFile,
+                                                                                        new TextRange(0, psiFile
+                                                                                          .getTextLength())));
         }
         int oldOffset = getConsoleEditor().getCaretModel().getOffset();
         getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
@@ -455,16 +450,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       .showInBestPositionFor(getConsoleEditor());
   }
 
-  @Nullable
-  private static String getConsoleDisplayName(@NotNull Project project) {
-    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
-    ToolWindow window = toolWindow.getToolWindow();
-    if (window == null) return null;
-    final Content content = window.getContentManager().getSelectedContent();
-    if (content == null) return null;
-    return content.getDisplayName();
-  }
-
   @NotNull
   @Override
   protected JComponent createCenterComponent() {
@@ -479,7 +464,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     // settings.set
     return centerComponent;
   }
-
 
   private void splitWindow() {
     Component console = getComponent(0);
@@ -528,20 +512,20 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myInitialized.setDone();
   }
 
-  public void setShowVars(boolean showVars) {
-    isShowVars = showVars;
-  }
-
   public boolean isShowVars() {
     return isShowVars;
   }
 
-  public void setShowQueue(boolean showQueue) {
-    isShowQueue = showQueue;
+  public void setShowVars(boolean showVars) {
+    isShowVars = showVars;
   }
 
   public boolean isShowQueue() {
     return isShowQueue;
+  }
+
+  public void setShowQueue(boolean showQueue) {
+    isShowQueue = showQueue;
   }
 
   public void whenInitialized(Runnable runnable) {
@@ -560,5 +544,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (myCommandQueue != null) {
       Disposer.dispose(myCommandQueue);
     }
+  }
+
+  @Nullable
+  private static String getConsoleDisplayName(@NotNull Project project) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
+    ToolWindow window = toolWindow.getToolWindow();
+    if (window == null) return null;
+    final Content content = window.getContentManager().getSelectedContent();
+    if (content == null) return null;
+    return content.getDisplayName();
   }
 }

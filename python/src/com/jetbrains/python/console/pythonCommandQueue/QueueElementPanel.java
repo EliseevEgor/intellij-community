@@ -3,11 +3,9 @@ package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -18,9 +16,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
+/**
+ * Panel for one command (CommandQueue)
+ */
 public class QueueElementPanel {
   private final QueueElementButton myCancelButton;
   private JBLabel myIcon;
@@ -31,10 +30,7 @@ public class QueueElementPanel {
   private volatile boolean isCanceled;
   private final ConsoleCommunication.ConsoleCodeFragment myCodeFragment;
 
-  private @NlsContexts.Button final String myCancelText = CoreBundle.message("button.cancel");
   private @NlsContexts.Tooltip final String myCancelTooltipText = CoreBundle.message("button.cancel");
-
-  JBColor selectedBackgroundColor = new JBColor(0xD9D9D9, 0x4A4A4A);
 
   public QueueElementPanel(ConsoleCommunication.ConsoleCodeFragment codeFragment, Icon icon) {
     myCodeFragment = codeFragment;
@@ -74,17 +70,6 @@ public class QueueElementPanel {
 
   public void setIcon(Icon icon) {
     myIcon.setIcon(icon);
-  }
-
-  @NotNull
-  private static Color getTextForeground() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
-  }
-
-  void update() {
-    Color color = getTextForeground();
-    myText.setForeground(color);
-    myCancelButton.updateAction.run();
   }
 
   public void setCancelButtonPainting(boolean cancelButtonPainting) {
