@@ -5,7 +5,10 @@ import com.intellij.openapi.components.Service;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,6 @@ public final class CommandQueueForPythonConsoleAction {
       queue.remove(codeFragment);
       handlers.get(consoleComm).decreaseInputPromptCount(1);
     }
-
   }
 
   public void removeAll(ConsoleCommunication consoleComm) {
@@ -45,7 +47,6 @@ public final class CommandQueueForPythonConsoleAction {
     if (value > 1){
       handlers.get(consoleComm).decreaseInputPromptCount(value - 1);
     }
-
     queue.clear();
   }
 

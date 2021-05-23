@@ -2,14 +2,12 @@
 package com.jetbrains.python.console.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.console.ConsoleHistoryModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,9 +21,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,12 +33,15 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Command queue window with editor
+ */
 public class ShowCommandQueueWithEditorAction extends DumbAwareAction {
   private final PythonConsoleView myConsole;
+
   public ShowCommandQueueWithEditorAction(PythonConsoleView consoleView) {
     super("Show CommandQueue", "Shows window with CommandQueue", AllIcons.Actions.ListFiles);
     myConsole = consoleView;
@@ -127,5 +125,4 @@ public class ShowCommandQueueWithEditorAction extends DumbAwareAction {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });
   }
-
 }
