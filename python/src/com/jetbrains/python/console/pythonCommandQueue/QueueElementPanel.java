@@ -8,14 +8,16 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Panel for one command (CommandQueue)
@@ -36,11 +38,21 @@ public class QueueElementPanel {
     myCodeFragment = codeFragment;
     myText.setFont(JBUI.Fonts.label(13));
     myText.setText(codeFragment.getText());
+
     myCancelButton = createCancelButton();
     myIcon.setIcon(icon);
-    myButtonPanel.add(createButtonPanel(myCancelButton.button), new GridConstraints());
+    myButtonPanel.add(createButtonPanel(myCancelButton.button));
 
-    myRootPanel.setPreferredSize(new Dimension(209, 20));
+    myRootPanel.setBackground(UIUtil.getListBackground());
+    myRootPanel.setFocusable(true);
+    myRootPanel.requestFocusInWindow();
+    myRootPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        getCommandPanelParent().commandSelected(QueueElementPanel.this);
+        myRootPanel.setBackground(UIUtil.getListSelectionBackground(true));
+      }
+    });
   }
 
   private JPanel createButtonPanel(JComponent component) {
@@ -63,9 +75,21 @@ public class QueueElementPanel {
     return new QueueElementButton(cancelButton, () -> cancelButton.setPainting(!isCanceled));
   }
 
+  public String getText() {
+    return myText.getText();
+  }
+
   private void cancelRequest() {
     isCanceled = true;
-    ((PythonCommandQueuePanel)myRootPanel.getParent().getParent().getParent().getParent()).removeCommand(myCodeFragment);
+    getCommandPanelParent().removeCommand(myCodeFragment);
+  }
+
+  private PythonCommandQueuePanel getCommandPanelParent() {
+    Container parent = myRootPanel;
+    while (!(parent instanceof PythonCommandQueuePanel)) {
+      parent = parent.getParent();
+    }
+    return (PythonCommandQueuePanel)parent;
   }
 
   public void setIcon(Icon icon) {

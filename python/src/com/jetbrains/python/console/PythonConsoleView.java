@@ -80,7 +80,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private final boolean myTestMode;
   private final PyHighlighter myPyHighlighter;
   private final EditorColorsScheme myScheme;
-  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel();
+  private final PythonCommandQueuePanel myCommandQueuePanel = new PythonCommandQueuePanel(this);
   private final ActionCallback myInitialized = new ActionCallback();
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
   private PythonConsoleExecuteActionHandler myExecuteActionHandler;

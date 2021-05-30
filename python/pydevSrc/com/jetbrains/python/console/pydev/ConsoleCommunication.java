@@ -30,7 +30,7 @@ public interface ConsoleCommunication {
   void notifyInputReceived();
 
   class ConsoleCodeFragment {
-    private final String myText;
+    private String myText;
     private final boolean myIsSingleLine;
 
     public ConsoleCodeFragment(String text, boolean isSingleLine) {
@@ -40,6 +40,10 @@ public interface ConsoleCommunication {
 
     public String getText() {
       return myText;
+    }
+
+    public void setText(String text) {
+      myText = text;
     }
 
     public boolean isSingleLine() {

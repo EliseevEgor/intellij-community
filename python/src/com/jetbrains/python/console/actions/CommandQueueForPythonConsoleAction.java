@@ -8,7 +8,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * Service for command queue in Python console.
@@ -31,19 +31,24 @@ public final class CommandQueueForPythonConsoleAction {
   public void removeCommand(ConsoleCommunication consoleComm) {
     var queue = queues.get(consoleComm);
     if (!queue.isEmpty()) {
-      queue.remove();
-      myListeners.get(consoleComm).removeCommand();
+      if (!queue.remove().getText().isBlank()) {
+        myListeners.get(consoleComm).removeCommand();
+      }
       if (!queue.isEmpty()) {
         execCommand(consoleComm, queue.peek());
       }
     }
   }
 
-  // удаление через кнопку или del
   public void removeCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment codeFragment) {
     var queue = queues.get(consoleComm);
     if (!queue.isEmpty()) {
-      queue.remove(codeFragment);
+      for (var code : queue) {
+        if (code.equals(codeFragment)) {
+          code.setText("pass");
+          break;
+        }
+      }
     }
   }
 
@@ -61,18 +66,18 @@ public final class CommandQueueForPythonConsoleAction {
   public void addNewCommand(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler, ConsoleCommunication.ConsoleCodeFragment code) {
     var console = pydevConsoleExecuteActionHandler.getConsoleCommunication();
     if (!queues.containsKey(pydevConsoleExecuteActionHandler.getConsoleCommunication())) {
-      queues.put(console, new ArrayBlockingQueue<>(DEFAULT_CAPACITY));
+      queues.put(console, new ConcurrentLinkedDeque<>());
       handlers.put(console, pydevConsoleExecuteActionHandler);
+    }
+    var queue = queues.get(console);
+    queue.add(code);
+
+    if (queue.size() == 1) {
+      execCommand(console, code);
     }
 
     if (!code.getText().isBlank()) {
-      var queue = queues.get(console);
-      queue.add(code);
       myListeners.get(console).addCommand(code);
-
-      if (queue.size() == 1) {
-        execCommand(console, code);
-      }
     }
     pydevConsoleExecuteActionHandler.updateConsoleState();
   }
