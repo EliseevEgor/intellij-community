@@ -55,7 +55,7 @@ public class QueueElementPanel {
     });
   }
 
-  private JPanel createButtonPanel(JComponent component) {
+  private static JPanel createButtonPanel(JComponent component) {
     JPanel iconsPanel = new NonOpaquePanel(new GridBagLayout());
     GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH);
     iconsPanel.add(component, gb.next());
