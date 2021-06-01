@@ -80,8 +80,10 @@ public class QueueElementPanel {
   }
 
   private void cancelRequest() {
-    isCanceled = true;
-    getCommandPanelParent().removeCommand(myCodeFragment);
+    if (myCancelButton.button.isActive()) {
+      isCanceled = true;
+      getCommandPanelParent().removeCommand(myCodeFragment);
+    }
   }
 
   private PythonCommandQueuePanel getCommandPanelParent() {
@@ -96,8 +98,9 @@ public class QueueElementPanel {
     myIcon.setIcon(icon);
   }
 
-  public void setCancelButtonPainting(boolean cancelButtonPainting) {
-    myCancelButton.button.setPainting(cancelButtonPainting);
+  public void unsetCancelButton() {
+    myCancelButton.button.setPainting(false);
+    myCancelButton.button.setActive(false);
   }
 
   @NotNull

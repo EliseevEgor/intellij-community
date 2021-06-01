@@ -81,7 +81,7 @@ public class PythonCommandQueuePanel extends JPanel {
     myPanel.add(elementPanel.getQueuePanel());
 
     if (myCommands.size() == 1) {
-      elementPanel.setCancelButtonPainting(false);
+      elementPanel.unsetCancelButton();
     }
 
     repaintAll();
@@ -101,7 +101,7 @@ public class PythonCommandQueuePanel extends JPanel {
     if (myCommands.size() > 0) {
       QueueElementPanel elementPanel = myQueueElementPanelMap.get(myCommands.get(0));
       elementPanel.setIcon(AllIcons.Actions.Execute);
-      elementPanel.setCancelButtonPainting(false);
+      elementPanel.unsetCancelButton();
     }
 
     ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand(communication, command);
@@ -123,7 +123,7 @@ public class PythonCommandQueuePanel extends JPanel {
     if (myCommands.size() > 0) {
       QueueElementPanel elementPanel = myQueueElementPanelMap.get(myCommands.get(0));
       elementPanel.setIcon(AllIcons.Actions.Execute);
-      elementPanel.setCancelButtonPainting(false);
+      elementPanel.unsetCancelButton();
     }
     repaintAll();
   }
