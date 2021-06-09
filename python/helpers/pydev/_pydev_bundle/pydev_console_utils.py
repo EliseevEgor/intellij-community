@@ -188,7 +188,8 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                         thread.interrupt_main()
                     else:
                         self.mainThread._thread.interrupt()  # Jython
-            self.finish_exec(False)
+
+            self.finish_exec(False, False) # ask
             return True
         except:
             traceback.print_exc()
@@ -210,13 +211,13 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         if server is not None:
             server.showConsole()
 
-    def finish_exec(self, more):
+    def finish_exec(self, more, exception_occurred):
         self.interruptable = False
-
+        # print(more, exception_occurred)
         server = self.get_server()
 
         if server is not None:
-            return server.notifyFinished(more)
+            return server.notifyFinished(more, exception_occurred)
         else:
             return True
 

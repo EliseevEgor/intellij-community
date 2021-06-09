@@ -18,7 +18,7 @@ class Command:
         self.interpreter = interpreter
         self.code_fragment = code_fragment
         self.more = None
-
+        self.exception_occurred = False
 
     def symbol_for_fragment(code_fragment):
         if code_fragment.is_single_line:

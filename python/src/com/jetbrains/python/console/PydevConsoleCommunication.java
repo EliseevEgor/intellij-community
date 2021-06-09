@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,6 +25,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleAction;
 import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -221,6 +223,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private void execNotifyFinished(boolean more) {
     myNeedsMore = more;
     setExecuting(false);
+
     notifyCommandExecuted(more);
   }
 
@@ -463,6 +466,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
             if (response != null && response.more) {
               myNeedsMore = true;
             }
+
             notifyCommandExecuted(true);
             onResponseReceived.fun(response);
           }
@@ -755,7 +759,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
 
     @Override
-    public void notifyFinished(boolean needsMoreInput) {
+    public void notifyFinished(boolean needsMoreInput, boolean exceptionOccurred) {
+      if (!exceptionOccurred) {
+        // notify the CommandQueue service that the command has been completed without exceptions
+        // and it must be removed from the queue
+        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeCommand(PydevConsoleCommunication.this);
+      }
+      else {
+        // clear queue if exception occurred
+        ServiceManager.getService(CommandQueueForPythonConsoleAction.class).removeAll(PydevConsoleCommunication.this);
+      }
       execNotifyFinished(needsMoreInput);
     }
 

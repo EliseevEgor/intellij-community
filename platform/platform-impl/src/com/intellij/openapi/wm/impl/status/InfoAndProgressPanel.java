@@ -252,7 +252,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  private void removeProgress(@NotNull MyInlineProgressIndicator progress) {
+  private void removeProgress(@NotNull MyInlineProgressIndicator progress) { // re
     synchronized (myOriginals) {
       if (!myInlineToOriginal.containsKey(progress)) return; // already disposed
 

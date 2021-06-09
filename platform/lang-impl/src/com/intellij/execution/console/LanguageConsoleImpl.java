@@ -86,6 +86,10 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
   };
 
+  public JPanel getPanel() {
+    return myPanel;
+  }
+
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language) {
     this(new Helper(project, new LightVirtualFile(title, language, "")));
   }
@@ -133,7 +137,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private void initComponents() {
     setupComponents();
-
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleExecutionEditor.getComponent());
     myPanel.add(myScrollBar);

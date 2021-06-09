@@ -1,0 +1,88 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.console.actions;
+
+import com.intellij.openapi.components.Service;
+import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
+/**
+ * Service for command queue in Python console.
+ * It has own listener(CommandQueueListener myListener), which it notifies about the change in the command queue.
+ */
+@Service
+public final class CommandQueueForPythonConsoleAction {
+  private static final int DEFAULT_CAPACITY = 10;
+
+  private final Map<ConsoleCommunication, CommandQueueListener> myListeners = new HashMap<>();
+
+  private final Map<ConsoleCommunication, Queue<ConsoleCommunication.ConsoleCodeFragment>>  queues = new HashMap<>();
+  private final Map<ConsoleCommunication, PydevConsoleExecuteActionHandler> handlers = new HashMap<>();
+
+  // adding a new listener that is responsible for drawing the command queue
+  public void addListener(ConsoleCommunication comm, CommandQueueListener listener) {
+    myListeners.put(comm, listener);
+  }
+
+  public void removeCommand(ConsoleCommunication consoleComm) {
+    var queue = queues.get(consoleComm);
+    if (!queue.isEmpty()) {
+      if (!queue.remove().getText().isBlank()) {
+        myListeners.get(consoleComm).removeCommand();
+      }
+      if (!queue.isEmpty()) {
+        execCommand(consoleComm, queue.peek());
+      }
+    }
+  }
+
+  public void removeCommand(ConsoleCommunication consoleComm, ConsoleCommunication.ConsoleCodeFragment codeFragment) {
+    var queue = queues.get(consoleComm);
+    if (!queue.isEmpty()) {
+      for (var code : queue) {
+        if (code.equals(codeFragment)) {
+          code.setText("pass");
+          break;
+        }
+      }
+    }
+  }
+
+  public void removeAll(ConsoleCommunication consoleComm) {
+    var queue = queues.get(consoleComm);
+    int value = queue.size();
+    if (value > 1){
+      handlers.get(consoleComm).decreaseInputPromptCount(value - 1);
+    }
+
+    queue.clear();
+    myListeners.get(consoleComm).removeAll();
+  }
+
+  public void addNewCommand(PydevConsoleExecuteActionHandler pydevConsoleExecuteActionHandler, ConsoleCommunication.ConsoleCodeFragment code) {
+    var console = pydevConsoleExecuteActionHandler.getConsoleCommunication();
+    if (!queues.containsKey(pydevConsoleExecuteActionHandler.getConsoleCommunication())) {
+      queues.put(console, new ConcurrentLinkedDeque<>());
+      handlers.put(console, pydevConsoleExecuteActionHandler);
+    }
+    var queue = queues.get(console);
+    queue.add(code);
+
+    if (queue.size() == 1) {
+      execCommand(console, code);
+    }
+
+    if (!code.getText().isBlank()) {
+      myListeners.get(console).addCommand(code);
+    }
+    pydevConsoleExecuteActionHandler.updateConsoleState();
+  }
+
+  private static void execCommand(ConsoleCommunication comm, ConsoleCommunication.ConsoleCodeFragment code) {
+    comm.execInterpreter(code, x -> null);
+  }
+}
